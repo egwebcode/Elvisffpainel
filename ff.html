@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PAINEL ELVIS FF</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&amp;family=Roboto+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff0055;
+            --secondary: #7000ff;
+            --bg: #050505;
+            --glass: rgba(15, 15, 15, 0.9);
+            --border: rgba(255, 0, 85, 0.3);
+            --text: #ffffff;
+            --success: #00ff9d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Canvas Background */
+        #canvas-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Container Principal */
+        .interface {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 380px; /* Mais compacto */
+            height: auto;
+            max-height: 90vh;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 60px rgba(255, 0, 85, 0.15);
+            overflow: hidden;
+            animation: bootUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* Header */
+        .header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: linear-gradient(180deg, rgba(255,0,85,0.05) 0%, rgba(0,0,0,0) 100%);
+        }
+
+        .header h1 {
+            font-size: 26px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px var(--primary);
+        }
+
+        .vip-badge {
+            font-size: 10px;
+            color: #fff;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+        }
+
+        /* Status Conexão */
+        .status-container {
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.4);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 8px var(--success);
+            align-self: center;
+        }
+
+        .status-text {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        /* Conteúdo */
+        .content {
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Cards de Função */
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 18px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card.active {
+            background: rgba(255, 0, 85, 0.05);
+            border-color: var(--primary);
+        }
+
+        .feature-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .feature-info h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .feature-info p {
+            font-size: 11px;
+            color: #666;
+            margin-top: 3px;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        /* Switch Customizado */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;; left: 0; right: 0; bottom: 0;
+            background-color: #1a1a1a;
+            transition: .3s;
+            border-radius: 34px;
+            border: 1px solid #333;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #666;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: transparent;
+            border-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+            background-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        /* Console */
+        .console-log {
+            margin: 0 20px 20px 20px;
+            height: 80px;
+            background: #000;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 10px;
+            color: var(--success);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column-reverse;
+            opacity: 0.8;
+        }
+
+        /* Botão Launch */
+        .bottom-panel {
+            padding: 0 20px 25px 20px;
+        }
+
+        .launch-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(90deg, #111, #1a1a1a);
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #666;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .launch-btn.ready {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            box-shadow: 0 5px 25px rgba(255, 0, 85, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); }
+        }
+
+        @keyframes bootUp {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+    </style>
+<style id="htmlEditorProStyle">#htmlEditorPro{position:fixed;top:30px;left:50%;transform:translateX(-50%);width:95vw;max-width:420px;height:70vh;max-height:90vh;background:#222;color:#fff;z-index:999999;box-shadow:0 0 18px #0009;display:flex;flex-direction:column;font-family:'Fira Mono','Consolas','monospace';border-radius:12px;}#htmlEditorProBar{background:#333;padding:12px;cursor:move;display:flex;align-items:center;gap:10px;border-bottom:2px solid #fff;font-size:18px;user-select:none;border-top-left-radius:12px;border-top-right-radius:12px;}#htmlEditorProBar b{color:#fff;font-weight:bold;font-size:18px;letter-spacing:1px;font-family:inherit;}#htmlEditorProBtns{display:flex;gap:8px;margin-left:auto;}#htmlEditorProBtns button{padding:7px 10px;border:none;border-radius:7px;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 2px 8px #0004;outline:none;}#htmlEditorProBtnRun{background:#0a0;color:#fff;}#htmlEditorProBtnSave{background:#06c;color:#fff;}#htmlEditorProBtnEdit{background:#f8d703;color:#222;}#htmlEditorProBtnClose{background:#c00;color:#fff;}#htmlEditorProBtnEnd{background:#444;color:#fff;}#htmlEditorPro textarea{flex:1;padding:10px;background:#222;color:#fff;font-family:inherit;font-size:14px;resize:none;border:none;outline:none;width:100%;height:100%;line-height:1.5;overflow:auto;border-bottom-left-radius:12px;border-bottom-right-radius:12px;}@media(max-width:600px){#htmlEditorPro{width:98vw;max-width:98vw;height:90vh;}#htmlEditorProBar{font-size:16px;padding:8px;}#htmlEditorProBtns button{font-size:15px;padding:6px 6px;}#htmlEditorPro textarea{font-size:12px;padding:6px;}}</style></head>
+<body>
+
+    <canvas id="canvas-bg" width="555" height="1083"></canvas>
+
+    <div class="interface">
+        <div class="header">
+            <h1>ELVIS FF INJECTOR</h1>
+            <span class="vip-badge">VIP VERSION v1.0</span>
+        </div>
+
+        <div class="status-container">
+            <div class="status-dot"></div>
+            <span class="status-text">SERVIDOR TESTE: ONLINE</span>
+        </div>
+
+        <div class="content">
+            <!-- COMBAT -->
+            <div class="feature-card" id="card-aim">
+                <div class="feature-info">
+                    <h3>Auxílio de Mira</h3>
+                    <p>Puxada leve para o inimigo</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="toggleFeature(this, 'AIM_ASSIST_V2', 'card-aim')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="feature-card" id="card-recoil">
+                <div class="feature-info">
+                    <h3>Estabilizar Mira</h3>
+                    <p>Reduz tremedeira e recuo</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="toggleFeature(this, 'NO_RECOIL_SCRIPT', 'card-recoil')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- PERFORMANCE -->
+            <div class="feature-card" id="card-fps">
+                <div class="feature-info">
+                    <h3>Otimizar FPS</h3>
+                    <p>Fluidez e Limpeza de RAM</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="toggleFeature(this, 'FPS_BOOST_MAX', 'card-fps')">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="console-log" id="console">
+            <div>&gt; SYSTEM INITIALIZED...</div>
+            <div>&gt; WAITING FOR USER INPUT...</div>
+        </div>
+
+        <div class="bottom-panel">
+            <button class="launch-btn" id="btn-open" onclick="launchFreeFire()">AGUARDANDO ATIVAÇÃO...</button>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIC SYSTEM ---
+        
+        let activeInjects = 0;
+        const btn = document.getElementById('btn-open');
+        
+        function log(msg, type = 'info') {
+            const consoleDiv = document.getElementById('console');
+            const line = document.createElement('div');
+            
+            // Generate fake hex code for realism
+            const hex = '0x' + Math.floor(Math.random()*16777215).toString(16).toUpperCase().padStart(6, '0');
+            
+            if(type === 'success') line.style.color = '#00ff9d';
+            if(type === 'error') line.style.color = '#ff0055';
+            
+            line.innerHTML = `<span style="opacity:0.5">[${hex}]</span> ${msg}`;
+            consoleDiv.appendChild(line);
+            
+            if (consoleDiv.children.length > 5) {
+                consoleDiv.removeChild(consoleDiv.firstChild);
+            }
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        function toggleFeature(checkbox, codeName, cardId) {
+            const card = document.getElementById(cardId);
+            
+            if (checkbox.checked) {
+                activeInjects++;
+                card.classList.add('active');
+                log(`INJECTING: ${codeName}...`);
+                
+                // Simulation of injection time
+                setTimeout(() => {
+                    log(`SUCCESS: ${codeName} LOADED`, 'success');
+                    updateButton();
+                }, 400);
+            } else {
+                activeInjects--;
+                card.classList.remove('active');
+                log(`UNLOADING: ${codeName}...`, 'error');
+                updateButton();
+            }
+        }
+
+        function updateButton() {
+            if (activeInjects > 0) {
+                btn.innerText = "ABRIR FREE FIRE";
+                btn.classList.add('ready');
+            } else {
+                btn.innerText = "AGUARDANDO ATIVAÇÃO...";
+                btn.classList.remove('ready');
+            }
+        }
+
+        function launchFreeFire() {
+            if (activeInjects === 0) {
+                log("ERROR: NO FEATURES SELECTED", 'error');
+                return;
+            }
+
+            log("STARTING GAME ENGINE...");
+            btn.innerText = "EXECUTANDO...";
+            
+            setTimeout(() => {
+                log("OPENING PACKAGE: com.dts.freefireth");
+                
+                // --- CRITICAL FIX FOR OPENING GAME ---
+                // This intent specifically targets the package. 
+                // Does NOT fallback to market automatically to prevent Play Store loop if app exists.
+                window.location.href = "intent://freefire/#Intent;scheme=freefire;package=com.dts.freefireth;end";
+                
+                // Reset visual state after attempt
+                setTimeout(() => {
+                    btn.innerText = "ABRIR FREE FIRE";
+                }, 2000);
+            }, 1000);
+        }
+
+        // --- VISUAL EFFECTS (PARTICLES) ---
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let particles = [];
+        for(let i=0; i<40; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 2
+            });
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(5,5,5,0.1)';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+            
+            ctx.fillStyle = '#ff0055';
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+
+</body></html>
